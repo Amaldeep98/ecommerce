@@ -1,0 +1,53 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Rollout
+metadata:
+  name: product-inventory
+  namespace: {{ .Values.namespace }}
+spec:
+  replicas: {{ .Values.productInventory.replicas }}
+  strategy:
+    blueGreen:
+      activeService: product-inventory-active
+      previewService: product-inventory-preview
+      autoPromotionEnabled: false
+  selector:
+    matchLabels:
+      app: product-inventory
+      version: v1
+  template:
+    metadata:
+      annotations:
+        sidecar.istio.io/inject: "true"
+      labels:
+        app: product-inventory
+        version: v1
+    spec:
+      containers:
+      - name: product-inventory
+        image: {{ .Values.productInventory.image }}:{{ .Values.productInventory.tag4 }}
+        ports:
+        - containerPort: {{ .Values.productInventory.containerPort }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: product-inventory-active
+  namespace: {{ .Values.namespace }}
+spec:
+  ports:
+  - port: {{ .Values.productInventory.servicePort }}
+    name: http
+  selector:
+    app: product-inventory
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: product-inventory-preview
+  namespace: {{ .Values.namespace }}
+spec:
+  ports:
+  - port: {{ .Values.productInventory.servicePort }}
+    name: http
+  selector:
+    app: product-inventory

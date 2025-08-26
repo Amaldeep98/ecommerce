@@ -1,0 +1,81 @@
+namespace: ecommerce
+
+PeerAuthentication: STRICT
+
+gateway:
+  hosts: "*"
+  port: 80
+
+VirtualService:
+  hosts: "*"
+  destinationHost: ecommerce-ui-active
+  port: 4000
+
+ecommerceUi:
+  image: amaldeep98/ecommerce-ui
+  tag1: v1
+  containerPort: 4000
+  servicePort: 4000
+  replicas: 1
+  env:
+    - name: REACT_APP_PROFILE_API_HOST
+      value: "http://profile-management-active"
+    - name: REACT_APP_PRODUCT_API_HOST
+      value: "http://product-catalog-active"
+    - name: REACT_APP_INVENTORY_API_HOST
+      value: "http://product-inventory-active"
+    - name: REACT_APP_ORDER_API_HOST
+      value: "http://order-management-active"
+    - name: REACT_APP_SHIPPING_API_HOST
+      value: "http://shipping-and-handling-active"
+    - name: REACT_APP_CONTACT_API_HOST
+      value: "http://contact-support-team-active"
+
+orderManagement:
+  image: rslim087/order-management
+  tag2: 1.0.0
+  containerPort: 9090
+  replicas: 1
+  servicePort: 9090
+  env:
+    - name: PRODUCT_INVENTORY_API_HOST
+      value: "http://product-inventory-active"
+    - name: PRODUCT_CATALOG_API_HOST
+      value: "http://product-catalog-active"
+    - name: SHIPPING_HANDLING_API_HOST
+      value: "http://shipping-and-handling-active"
+
+productCatalog:
+  image: rslim087/product-catalog
+  tag3: 1.0.0
+  containerPort: 3001
+  replicas: 1
+  servicePort: 3001
+
+productInventory:
+  image: rslim087/product-inventory
+  tag4: 1.0.0
+  containerPort: 3002
+  replicas: 1
+  servicePort: 3002
+
+profileManagement:
+  image: rslim087/profile-management
+  tag5: 1.0.0
+  containerPort: 3003
+  replicas: 1
+  servicePort: 3003
+
+shippingAndHandling:
+  image: rslim087/shipping-and-handling
+  tag6: 1.0.0
+  containerPort: 8080
+  replicas: 1
+  servicePort: 8080
+
+contactSupportTeam:
+  image: rslim087/contact-support-team
+  tag7: 1.0.0
+  containerPort: 8000
+  replicas: 1
+  servicePort: 8000

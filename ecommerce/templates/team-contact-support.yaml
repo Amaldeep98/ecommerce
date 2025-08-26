@@ -1,0 +1,51 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Rollout
+metadata:
+  name: contact-support-team
+  namespace: {{ .Values.namespace }}
+spec:
+  replicas: {{ .Values.contactSupportTeam.replicas }}
+  strategy:
+    blueGreen:
+      activeService: contact-support-team-active
+      previewService: contact-support-team-preview
+  selector:
+    matchLabels:
+      app: contact-support-team
+      version: v1
+  template:
+    metadata:
+      labels:
+        app: contact-support-team
+        version: v1
+    spec:
+      containers:
+      - name: contact-support-team
+        image: {{ .Values.contactSupportTeam.image }}:{{ .Values.contactSupportTeam.tag7 }}
+        ports:
+        - containerPort: {{ .Values.contactSupportTeam.containerPort }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: contact-support-team-active
+  namespace: {{ .Values.namespace }}
+spec:
+  ports:
+  - port: {{ .Values.contactSupportTeam.servicePort }}
+    name: http
+  selector:
+    app: contact-support-team
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: contact-support-team-preview
+  namespace: {{ .Values.namespace }}
+spec:
+  ports:
+  - port: {{ .Values.contactSupportTeam.servicePort }}
+    name: http
+  selector:
+    app: contact-support-team

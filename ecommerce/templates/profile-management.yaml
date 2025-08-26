@@ -1,0 +1,53 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Rollout
+metadata:
+  name: profile-management
+  namespace: {{ .Values.namespace }}
+spec:
+  replicas: {{ .Values.profileManagement.replicas }}
+  strategy:
+    blueGreen:
+      activeService: profile-management-active
+      previewService: profile-management-preview
+      autoPromotionEnabled: false
+  selector:
+    matchLabels:
+      app: profile-management
+      version: v1
+  template:
+    metadata:
+      annotations:
+        sidecar.istio.io/inject: "true"
+      labels:
+        app: profile-management
+        version: v1
+    spec:
+      containers:
+      - name: profile-management
+        image: {{ .Values.profileManagement.image }}:{{ .Values.profileManagement.tag5 }}
+        ports:
+        - containerPort: {{ .Values.profileManagement.containerPort }}
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: profile-management-active
+  namespace: {{ .Values.namespace }}
+spec:
+  ports:
+  - port: {{ .Values.profileManagement.servicePort }}
+    name: http
+  selector:
+    app: profile-management
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: profile-management-preview
+  namespace: {{ .Values.namespace }}
+spec:
+  ports:
+  - port: {{ .Values.profileManagement.servicePort }}
+    name: http
+  selector:
+    app: profile-management
