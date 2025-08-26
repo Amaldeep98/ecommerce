@@ -7,7 +7,7 @@ pipeline {
     environment {
         DOCKER_HUB_ID = 'amaldeep98'
         IMAGE_NAME= 'ecommerce-ui'
-        HELM_CHART_NAME = 'ecommerce-ui'
+        HELM_CHART_NAME = 'ecommerce'
         REGION = 'us-east-1'
     }
     stages {
@@ -18,12 +18,7 @@ pipeline {
         }
         stage('Build') {
             steps {
-                sh 'mvn clean package'
-            }
-        }
-        stage ('Test') {
-            steps {
-                sh 'mvn test'
+                sh 'cd ecommerce-ui/client/ && npm install --force && npm run build'
             }
         }
         stage ('docker-login') {
@@ -36,7 +31,7 @@ pipeline {
         }
         stage('docker-build') {
             steps {
-                sh 'docker build -t $DOCKER_HUB_ID/$IMAGE_NAME:latest .'
+                sh 'docker build -t $DOCKER_HUB_ID/$IMAGE_NAME:latest ./ecommerce-ui/'
                 sh 'docker tag $DOCKER_HUB_ID/$IMAGE_NAME:latest $DOCKER_HUB_ID/$IMAGE_NAME:$BUILD_NUMBER'
             }
         }
@@ -50,8 +45,8 @@ pipeline {
         }
         stage('helm-tag-update') {
             steps {
-                sh "sed -i 's/tag: .*/tag: $BUILD_NUMBER/' ./helm/values.yaml"
-                sh "sed -i 's/version: .*/version: $BUILD_NUMBER/' ./helm/Chart.yaml"
+                sh "sed -i 's/tag1: .*/tag1: $BUILD_NUMBER/' ./ecommerce/values.yaml"
+                sh "sed -i 's/version: .*/version: $BUILD_NUMBER/' ./ecommerce/Chart.yaml"
             }
         }
         stage ('helm-repo-create') {
