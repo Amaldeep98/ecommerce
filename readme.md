@@ -27,6 +27,85 @@ kubectl get pods -n argocd
 
 ---
 
+T
+### Install the Argo CD CLI:
+
+For Linux:
+
+```bash
+curl -sSL -o argocd-linux-amd64 https://github.com/argoproj/argo-cd/releases/latest/download/argocd-linux-amd64
+sudo install -m 555 argocd-linux-amd64 /usr/local/bin/argocd
+rm argocd-linux-amd64
+```
+
+Verify installation:
+
+```bash
+argocd version
+```
+
+---
+
+### Then list your applications:
+
+```bash
+argocd app list
+```
+
+
+---
+
+### 1. Get the Argo CD server URL
+
+Run:
+
+```bash
+kubectl get svc -n argocd
+```
+
+Look for `argocd-server`.
+If using Minikube:
+
+```bash
+minikube service argocd-server -n argocd --url
+```
+
+This will give you something like:
+
+```
+http://192.168.49.2:30123
+```
+
+---
+
+### 2. Log in to Argo CD
+
+```bash
+argocd login <ARGOCD_SERVER_URL> --username admin --password <PASSWORD> --insecure
+```
+
+If you don't know the password:
+
+```bash
+kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d
+```
+
+---
+
+### 3. List your applications
+
+```bash
+argocd app list
+```
+
+If your apps are in a different namespace (e.g., `ecommerce`), that’s okay — **`argocd app list` works cluster-wide by default**, the namespace in Argo CD refers to the control plane, not the app namespace.
+
+---
+
+
+---
+
+
 ### 1.2 Access Argo CD UI (in Minikube)
 
 Expose Argo CD server:
@@ -170,6 +249,7 @@ stringData:
 
 ```
 get the toekn from "aws ecr-public get-login-password --region us-east-1  ---> run  this and copy the token and paste it in the secret"
+Note: use crone jobs to update the secret with new token every 24 hours
 
 
 2. Create the Argo CD Application:
