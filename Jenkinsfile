@@ -1,8 +1,7 @@
 pipeline {
     agent any
     tools {
-        maven 'maven3.9'
-        jdk 'jdk17'
+        nodejs 'nodejs'
     }
     environment {
         DOCKER_HUB_ID = 'amaldeep98'
@@ -13,15 +12,15 @@ pipeline {
     stages {
         stage('Git-checkout') {
             steps {
-                git 'https://github.com/Amaldeep98/Memory-Monster.git'
+                git 'https://github.com/Amaldeep98/ecommerce.git'
             }
         }
         stage('Build') {
             steps {
-                sh 'cd ecommerce-ui/client/ && npm install --force && npm run build'
+                sh 'cd ecommerce-ui/client/ && unset CI && npm install --legacy-peer-deps && npm run build'
             }
         }
-        stage ('docker-login') {
+                stage ('docker-login') {
             steps {
                 withCredentials([usernamePassword(credentialsId: 'dockerhub-creds', usernameVariable: 'USERNAME', passwordVariable: 'PASSWORD')]) {
                     sh 'echo $PASSWORD | docker login -u $USERNAME --password-stdin'
@@ -46,7 +45,7 @@ pipeline {
         stage('helm-tag-update') {
             steps {
                 sh "sed -i 's/tag1: .*/tag1: $BUILD_NUMBER/' ./ecommerce/values.yaml"
-                sh "sed -i 's/version: .*/version: $BUILD_NUMBER/' ./ecommerce/Chart.yaml"
+                sh "sed -i 's/version: .*/version: $BUILD_NUMBER.0.0/' ./ecommerce/Chart.yaml"
             }
         }
         stage ('helm-repo-create') {
@@ -73,27 +72,12 @@ pipeline {
                 withCredentials([string(credentialsId: 'aws-public-alias', variable: 'AWS_PUBLIC_ALIAS')]) {
                     sh  '''
                         rm -rf *.tgz
-                        helm package ./helm
-                        helm push $HELM_CHART_NAME-$BUILD_NUMBER.tgz oci://public.ecr.aws/$AWS_PUBLIC_ALIAS
+                        helm package ./ecommerce
+                        helm push $HELM_CHART_NAME-$BUILD_NUMBER.0.0.tgz oci://public.ecr.aws/$AWS_PUBLIC_ALIAS
                         
                     '''
                 }
             }
-        }
-        stage('Trigger Deploy Job') {
-            steps {
-                build job: 'Memory-monster-deploy', parameters: [
-                    string(name: 'BUILD_NUMBER_ID', value: "${env.BUILD_NUMBER}"),
-                    string(name: 'REGION', value: "${env.REGION}"),
-                    string(name: 'HELM_CHART_NAME', value: "${env.HELM_CHART_NAME}")
-                ]
-            }
-        }
-    }
-    post {
-        always {
-            sh 'docker logout'
-            sh 'rm -rf *.tgz'
         }
     }
 }
