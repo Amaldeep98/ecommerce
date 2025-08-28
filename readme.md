@@ -102,9 +102,7 @@ If your apps are in a different namespace (e.g., `ecommerce`), that’s okay —
 
 ---
 
-
 ---
-
 
 ### 1.2 Access Argo CD UI (in Minikube)
 

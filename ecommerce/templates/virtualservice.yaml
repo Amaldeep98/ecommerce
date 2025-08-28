@@ -10,12 +10,18 @@ spec:
   gateways:
   - ecommerce-gateway
   http:
-  - match:
+  - name: primary
+    match:
     - uri:
         prefix: /
     route:
     - destination:
-        host: {{ .Values.VirtualService.destinationHost }}
+        host: {{ .Values.VirtualService.destinationHostActive }}
         port:
           number: {{ .Values.VirtualService.port }}
-
+      weight: 100
+    - destination:
+        host: {{ .Values.VirtualService.destinationHostPreview }}
+        port:
+          number: {{ .Values.VirtualService.port }}
+      weight: 0

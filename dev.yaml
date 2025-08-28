@@ -462,3 +462,480 @@ spec:
         host: ecommerce-ui-active
         port:
           number: 4000
+---
+# Source: ecommerce/templates/ecommerce-ui.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: ecommerce-ui-active
+  namespace: ecommerce
+spec:
+  ports:
+  - port: 4000
+    name: http
+  selector:
+    app: ecommerce-ui
+---
+# Source: ecommerce/templates/ecommerce-ui.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: ecommerce-ui-preview
+  namespace: ecommerce
+spec:
+  ports:
+  - port: 4000
+    name: http
+  selector:
+    app: ecommerce-ui
+---
+# Source: ecommerce/templates/order-management.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: order-management-active
+  namespace: ecommerce
+spec:
+  ports:
+  - port: 9090
+    name: http
+  selector:
+    app: order-management
+---
+# Source: ecommerce/templates/order-management.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: order-management-preview
+  namespace: ecommerce
+spec:
+  ports:
+  - port: 9090
+    name: http
+  selector:
+    app: order-management
+---
+# Source: ecommerce/templates/product-catalog.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: product-catalog-active
+  namespace: ecommerce
+spec:
+  ports:
+  - port: 3001
+    name: http
+  selector:
+    app: product-catalog
+---
+# Source: ecommerce/templates/product-catalog.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: product-catalog-preview
+  namespace: ecommerce
+spec:
+  ports:
+  - port: 3001
+    name: http
+  selector:
+    app: product-catalog
+---
+# Source: ecommerce/templates/product-inventory.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: product-inventory-active
+  namespace: ecommerce
+spec:
+  ports:
+  - port: 3002
+    name: http
+  selector:
+    app: product-inventory
+---
+# Source: ecommerce/templates/product-inventory.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: product-inventory-preview
+  namespace: ecommerce
+spec:
+  ports:
+  - port: 3002
+    name: http
+  selector:
+    app: product-inventory
+---
+# Source: ecommerce/templates/profile-management.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: profile-management-active
+  namespace: ecommerce
+spec:
+  ports:
+  - port: 3003
+    name: http
+  selector:
+    app: profile-management
+---
+# Source: ecommerce/templates/profile-management.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: profile-management-preview
+  namespace: ecommerce
+spec:
+  ports:
+  - port: 3003
+    name: http
+  selector:
+    app: profile-management
+---
+# Source: ecommerce/templates/shipping-and-handling.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: shipping-and-handling-active
+  namespace: ecommerce
+spec:
+  ports:
+  - port: 8080
+    name: http
+  selector:
+    app: shipping-and-handling
+---
+# Source: ecommerce/templates/shipping-and-handling.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: shipping-and-handling-passive
+  namespace: ecommerce
+spec:
+  ports:
+  - port: 8080
+    name: http
+  selector:
+    app: shipping-and-handling
+---
+# Source: ecommerce/templates/team-contact-support.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: contact-support-team-active
+  namespace: ecommerce
+spec:
+  ports:
+  - port: 8000
+    name: http
+  selector:
+    app: contact-support-team
+---
+# Source: ecommerce/templates/team-contact-support.yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: contact-support-team-preview
+  namespace: ecommerce
+spec:
+  ports:
+  - port: 8000
+    name: http
+  selector:
+    app: contact-support-team
+---
+# Source: ecommerce/templates/gateway.yaml
+apiVersion: networking.istio.io/v1alpha3
+kind: Gateway
+metadata:
+  name: ecommerce-gateway
+  namespace: ecommerce
+spec:
+  selector:
+    istio: ingressgateway
+  servers:
+  - port:
+      number: 80
+      name: http
+      protocol: HTTP
+    hosts:
+    - "*"
+---
+# Source: ecommerce/templates/mtls.yaml
+apiVersion: security.istio.io/v1beta1
+kind: PeerAuthentication
+metadata:
+  name: default
+  namespace: ecommerce
+spec:
+  mtls:
+    mode: STRICT
+---
+# Source: ecommerce/templates/ecommerce-ui.yaml
+apiVersion: argoproj.io/v1alpha1
+kind: Rollout
+metadata:
+  name: ecommerce-ui
+  namespace: ecommerce
+spec:
+  replicas: 1
+  strategy:
+    blueGreen:
+      activeService: ecommerce-ui-active
+      previewService: ecommerce-ui-preview
+      autoPromotionEnabled: false
+      trafficRouting:
+        istio:
+          virtualService:
+            name: ecommerce-gateway-routes
+            routes:
+              - primary
+  selector:
+    matchLabels:
+      app: ecommerce-ui
+      version: v1
+  template:
+    metadata:
+      annotations:
+        sidecar.istio.io/inject: "true"
+      labels:
+        app: ecommerce-ui
+        version: v1
+    spec:
+      containers:
+      - name: ecommerce-ui
+        image: amaldeep98/ecommerce-ui:v1
+        ports:
+        - containerPort: 4000
+        env:
+        - name: REACT_APP_PROFILE_API_HOST
+          value: http://profile-management-active
+        - name: REACT_APP_PRODUCT_API_HOST
+          value: http://product-catalog-active
+        - name: REACT_APP_INVENTORY_API_HOST
+          value: http://product-inventory-active
+        - name: REACT_APP_ORDER_API_HOST
+          value: http://order-management-active
+        - name: REACT_APP_SHIPPING_API_HOST
+          value: http://shipping-and-handling-active
+        - name: REACT_APP_CONTACT_API_HOST
+          value: http://contact-support-team-active
+---
+# Source: ecommerce/templates/order-management.yaml
+apiVersion: argoproj.io/v1alpha1
+kind: Rollout
+metadata:
+  name: order-management
+  namespace: ecommerce
+spec:
+  replicas: 1
+  strategy:
+    blueGreen:
+      activeService: order-management-active
+      previewService: order-management-preview
+      autoPromotionEnabled: false
+  selector:
+    matchLabels:
+      app: order-management
+      version: v1
+  template:
+    metadata:
+      annotations:
+        sidecar.istio.io/inject: "true"
+      labels:
+        app: order-management
+        version: v1
+    spec:
+      containers:
+      - name: order-management
+        image: rslim087/order-management:1.0.0
+        ports:
+        - containerPort: 9090
+        env:
+        - name: PRODUCT_INVENTORY_API_HOST
+          value: http://product-inventory-active
+        - name: PRODUCT_CATALOG_API_HOST
+          value: http://product-catalog-active
+        - name: SHIPPING_HANDLING_API_HOST
+          value: http://shipping-and-handling-active
+---
+# Source: ecommerce/templates/product-catalog.yaml
+apiVersion: argoproj.io/v1alpha1
+kind: Rollout
+metadata:
+  name: product-catalog
+  namespace: ecommerce
+spec:
+  replicas: 1
+  strategy:
+    blueGreen:
+      activeService: product-catalog-active
+      previewService: product-catalog-preview
+      autoPromotionEnabled: false
+  selector:
+    matchLabels:
+      app: product-catalog
+      version: v1
+  template:
+    metadata:
+      annotations:
+        sidecar.istio.io/inject: "true"
+      labels:
+        app: product-catalog
+        version: v1
+    spec:
+      containers:
+      - name: product-catalog
+        image: rslim087/product-catalog:1.0.0
+        ports:
+        - containerPort: 3001
+---
+# Source: ecommerce/templates/product-inventory.yaml
+apiVersion: argoproj.io/v1alpha1
+kind: Rollout
+metadata:
+  name: product-inventory
+  namespace: ecommerce
+spec:
+  replicas: 1
+  strategy:
+    blueGreen:
+      activeService: product-inventory-active
+      previewService: product-inventory-preview
+      autoPromotionEnabled: false
+  selector:
+    matchLabels:
+      app: product-inventory
+      version: v1
+  template:
+    metadata:
+      annotations:
+        sidecar.istio.io/inject: "true"
+      labels:
+        app: product-inventory
+        version: v1
+    spec:
+      containers:
+      - name: product-inventory
+        image: rslim087/product-inventory:1.0.0
+        ports:
+        - containerPort: 3002
+---
+# Source: ecommerce/templates/profile-management.yaml
+apiVersion: argoproj.io/v1alpha1
+kind: Rollout
+metadata:
+  name: profile-management
+  namespace: ecommerce
+spec:
+  replicas: 1
+  strategy:
+    blueGreen:
+      activeService: profile-management-active
+      previewService: profile-management-preview
+      autoPromotionEnabled: false
+  selector:
+    matchLabels:
+      app: profile-management
+      version: v1
+  template:
+    metadata:
+      annotations:
+        sidecar.istio.io/inject: "true"
+      labels:
+        app: profile-management
+        version: v1
+    spec:
+      containers:
+      - name: profile-management
+        image: rslim087/profile-management:1.0.0
+        ports:
+        - containerPort: 3003
+---
+# Source: ecommerce/templates/shipping-and-handling.yaml
+apiVersion: argoproj.io/v1alpha1
+kind: Rollout
+metadata:
+  name: shipping-and-handling
+  namespace: ecommerce
+spec:
+  replicas: 1
+  strategy:
+    blueGreen:
+      activeService: shipping-and-handling-active
+      previewService: shipping-and-handling-passive
+      autoPromotionEnabled: false
+  selector:
+    matchLabels:
+      app: shipping-and-handling
+      version: v1
+  template:
+    metadata:
+      annotations:
+        sidecar.istio.io/inject: "true"
+      labels:
+        app: shipping-and-handling
+        version: v1
+    spec:
+      containers:
+      - name: shipping-and-handling
+        image: rslim087/shipping-and-handling:1.0.0
+        ports:
+        - containerPort: 8080
+---
+# Source: ecommerce/templates/team-contact-support.yaml
+apiVersion: argoproj.io/v1alpha1
+kind: Rollout
+metadata:
+  name: contact-support-team
+  namespace: ecommerce
+spec:
+  replicas: 1
+  strategy:
+    blueGreen:
+      activeService: contact-support-team-active
+      previewService: contact-support-team-preview
+  selector:
+    matchLabels:
+      app: contact-support-team
+      version: v1
+  template:
+    metadata:
+      labels:
+        app: contact-support-team
+        version: v1
+    spec:
+      containers:
+      - name: contact-support-team
+        image: rslim087/contact-support-team:1.0.0
+        ports:
+        - containerPort: 8000
+---
+# Source: ecommerce/templates/virtualservice.yaml
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: ecommerce-gateway-routes
+  namespace: ecommerce
+spec:
+  hosts:
+  - "*"
+  gateways:
+  - ecommerce-gateway
+  http:
+  - name: primary
+    match:
+    - uri:
+        prefix: /
+    route:
+    - destination:
+        host: ecommerce-ui-active
+        port:
+          number: 4000
+      weight: 100
+    - destination:
+        host: ecommerce-ui-preview
+        port:
+          number: 4000
+      weight: 0

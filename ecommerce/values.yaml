@@ -8,7 +8,8 @@ gateway:
 
 VirtualService:
   hosts: "*"
-  destinationHost: ecommerce-ui-active
+  destinationHostActive: ecommerce-ui-active
+  destinationHostPreview: ecommerce-ui-preview
   port: 4000
 
 ecommerceUi:
