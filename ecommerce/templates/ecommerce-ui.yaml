@@ -10,12 +10,6 @@ spec:
       activeService: ecommerce-ui-active
       previewService: ecommerce-ui-preview
       autoPromotionEnabled: false
-      trafficRouting:
-        istio:
-          virtualService:
-            name: ecommerce-gateway-routes
-            routes:
-              - primary
   selector:
     matchLabels:
       app: ecommerce-ui
