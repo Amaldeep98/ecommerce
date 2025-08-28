@@ -1,1 +1,3 @@
 application.yaml
+application-argo.yaml
+aws-secret-argo.yaml
