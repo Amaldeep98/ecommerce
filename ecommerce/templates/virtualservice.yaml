@@ -19,9 +19,3 @@ spec:
         host: {{ .Values.VirtualService.destinationHostActive }}
         port:
           number: {{ .Values.VirtualService.port }}
-      weight: 100
-    - destination:
-        host: {{ .Values.VirtualService.destinationHostPreview }}
-        port:
-          number: {{ .Values.VirtualService.port }}
-      weight: 0
