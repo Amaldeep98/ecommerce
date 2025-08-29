@@ -10,6 +10,15 @@ spec:
   gateways:
   - ecommerce-gateway
   http:
+  - name: preview
+    match:
+    - uri:
+        prefix: /preview
+    route:
+    - destination:
+        host: {{ .Values.VirtualService.destinationHostPreview }}
+        port:
+          number: {{ .Values.VirtualService.port }}
   - name: primary
     match:
     - uri:
@@ -19,3 +28,4 @@ spec:
         host: {{ .Values.VirtualService.destinationHostActive }}
         port:
           number: {{ .Values.VirtualService.port }}
+
