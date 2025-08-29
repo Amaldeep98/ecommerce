@@ -245,6 +245,25 @@ stringData:
   username: AWS
   password: <your-ecr-login-password>  <-- token
 
+or
+
+aws ecr-public get-login-password --region us-east-1 \
+  | argocd repo add oci://public.ecr.aws/p9h4b6q6/ecommerce \
+    --type helm \
+    --name memory-monster-repo \
+    --username AWS \
+    --password-stdin
+
+or 
+
+kubectl create secret generic ecr-public-creds \
+  -n argocd \
+  --from-literal=url=oci://public.ecr.aws/p9h4b6q6/ecommerce \
+  --from-literal=username=AWS \
+  --from-literal=password="$(aws ecr-public get-login-password --region us-east-1)" \
+  --dry-run=client -o yaml | kubectl apply -f -
+
+
 ```
 get the toekn from "aws ecr-public get-login-password --region us-east-1  ---> run  this and copy the token and paste it in the secret"
 Note: use crone jobs to update the secret with new token every 24 hours
@@ -256,29 +275,26 @@ Note: use crone jobs to update the secret with new token every 24 hours
 apiVersion: argoproj.io/v1alpha1
 kind: Application
 metadata:
-  name: ecommerce-app
+  name: <ecommerce-app>
   namespace: argocd
 spec:
   project: default
   source:
-    repoURL: oci://public.ecr.aws/<alias>/ecommerce
-    chart: ecommerce
-    targetRevision: ^1.0.0
+    repoURL: <oci://public.ecr.aws/p9h4b6q6/ecommerce>
+    chart: ecommerce 
+    targetRevision: <"*">
     helm:
       values: |
-        image:
-          repository: <dockerhub-username>/landing
-          tag: "1.0.0"
+        replicaCount: 2
   destination:
     server: https://kubernetes.default.svc
-    namespace: ecommerce
+    namespace: <ecommerce>
   syncPolicy:
     automated:
       prune: true
       selfHeal: true
     syncOptions:
     - CreateNamespace=true
-```
 
 3. Apply the files:
 
